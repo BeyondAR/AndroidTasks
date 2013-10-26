@@ -17,20 +17,20 @@ package com.beyondar.android.util.task;
 
 /**
  * 
- *         This is a runable for synchronized data. Use setResult() to store the result of the process and getResult() to get it.<br>
- *         NOTE: Thi class is not used inside the TaskExecutor
+ *         This is a runnable for synchronized data. Use setResult() to store the result of the process and getResult() to get it.<br>
+ *         NOTE: This class is not used inside the TaskExecutor
  * 
  */
 
 public abstract class RunnableWithResults implements Runnable {
 
-	private Object _result;
+	private Object mRresult;
 	
 	protected void setResult(Object result){
-		_result = result;
+		mRresult = result;
 	}
 	
 	public Object getResult(){
-		return _result;
+		return mRresult;
 	}
 }

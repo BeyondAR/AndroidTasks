@@ -25,19 +25,19 @@ public abstract class Task {
 	public static final int TASK_TYPE_NORMAL = 6978;
 	public static final int TASK_TYPE_TIMER = TASK_TYPE_NORMAL + 1;
 
-	private long _id;
-	private boolean runInBackground;
+	private long mId;
+	private boolean mRunInBackground;
 
-	private boolean running;
+	private boolean mRunning;
 
-	private boolean waitTaskToFinish;
-	private int taskToWait;
+	private boolean mWaitTaskToFinish;
+	private int mTaskToWait;
 
 	public Task(long id) {
-		running = false;
-		runInBackground = false;
-		_id = id;
-		waitTaskToFinish = false;
+		mRunning = false;
+		mRunInBackground = false;
+		mId = id;
+		mWaitTaskToFinish = false;
 	}
 
 	/**
@@ -57,7 +57,7 @@ public abstract class Task {
 	 * @param run
 	 */
 	public final void setRunInBackground(boolean run) {
-		runInBackground = run;
+		mRunInBackground = run;
 	}
 
 	/**
@@ -66,7 +66,7 @@ public abstract class Task {
 	 * @return
 	 */
 	public final boolean runInBackground() {
-		return runInBackground;
+		return mRunInBackground;
 	}
 
 	/**
@@ -75,7 +75,7 @@ public abstract class Task {
 	 * @return true if is already running, false otherwise
 	 */
 	public boolean isRunning() {
-		return running;
+		return mRunning;
 	}
 
 	/**
@@ -84,7 +84,7 @@ public abstract class Task {
 	 * @return The output of this task ({@link TaskResult}
 	 */
 	public TaskResult executeTask() {
-		running = true;
+		mRunning = true;
 		TaskResult out = null;
 
 		// out = task.preprocessor();
@@ -100,41 +100,41 @@ public abstract class Task {
 		out = checkDependencies();
 
 		if (out == null) {
-			out = new TaskResult(_id, false, TaskResult.TASK_MESSAGE_UNKNOW,
+			out = new TaskResult(mId, false, TaskResult.TASK_MESSAGE_UNKNOW,
 					null, null);
 		}
 		if (out.msg() == TaskResult.TASK_MESSAGE_WAIT_OTHER_TASK_TO_FINISH) {
-			running = false;
+			mRunning = false;
 			return out;
 		}
-		waitTaskToFinish = false;
+		mWaitTaskToFinish = false;
 		if (out.error() || out.msg() == TaskResult.TASK_MESSAGE_ERROR_CHEKING_DEPENDENCIES) {
 			onKillTask(out);
-			running = false;
+			mRunning = false;
 			return out;
 		}
 
 		out = runTask();
 
 		if (out == null) {
-			out = new TaskResult(_id, false, TaskResult.TASK_MESSAGE_UNKNOW,
+			out = new TaskResult(mId, false, TaskResult.TASK_MESSAGE_UNKNOW,
 					null, null);
 		}
 		if (out.error()) {
 			onKillTask(out);
-			running = false;
+			mRunning = false;
 			return out;
 		}
 
 		onFinish();
-		running = false;
+		mRunning = false;
 		return out;
 
 	}
 
 	/**
 	 * Use this method to stop this task until the task with the defined id will
-	 * finish. After the desidered task will finish, the method
+	 * finish. After the desired task will finish, the method
 	 * checkDependencies() will be executed again. <br>
 	 * To notify the {@link TaskExecutor} that this task has to wait, remember
 	 * to return the {@link TaskResult} with the message
@@ -146,12 +146,12 @@ public abstract class Task {
 	 *         TaskResult.TASK_MESSAGE_WAIT_OTHER_TASK_TO_FINISH
 	 */
 	protected TaskResult waitUntilTaksFinish(int id) {
-		taskToWait = id;
-		waitTaskToFinish = true;
+		mTaskToWait = id;
+		mWaitTaskToFinish = true;
 
-		return new TaskResult(_id, false,
+		return new TaskResult(mId, false,
 				TaskResult.TASK_MESSAGE_WAIT_OTHER_TASK_TO_FINISH,
-				"Waiting for the task id=" + taskToWait, null);
+				"Waiting for the task id=" + mTaskToWait, null);
 	}
 
 	/**
@@ -162,7 +162,7 @@ public abstract class Task {
 	 * @return the id of the task to wait
 	 */
 	public int getTaskIdToWait() {
-		return taskToWait;
+		return mTaskToWait;
 	}
 
 	/**
@@ -171,7 +171,7 @@ public abstract class Task {
 	 * @return true if there is a task to wait before execute this
 	 */
 	public boolean isWaitingUntilOtherTaskFinishes() {
-		return waitTaskToFinish;
+		return mWaitTaskToFinish;
 	}
 
 	// private Vector listeners;
@@ -182,7 +182,7 @@ public abstract class Task {
 	 * @return the task id
 	 */
 	public long getIdTask() {
-		return _id;
+		return mId;
 	}
 
 	// /**

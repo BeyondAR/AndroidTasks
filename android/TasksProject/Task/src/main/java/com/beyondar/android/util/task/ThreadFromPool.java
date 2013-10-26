@@ -19,19 +19,19 @@ import java.util.Vector;
 
 public class ThreadFromPool extends Thread {
 
-	private final Object lock = new Object();
+	private final Object mLock = new Object();
 
-	private long id;
+	private long mId;
 
-	private boolean stop;
-	private Vector<Task> taskList;
-	private OnThreadFromPoolStop onThreadFromPoolStop;
-	private OnFinishTaskListener taskListener;
+	private boolean mStop;
+	private Vector<Task> mTaskList;
+	private OnThreadFromPoolStop mOnThreadFromPoolStop;
+	private OnFinishTaskListener mTaskListener;
 
 	//private String tag = "ThreadFromPool";
 
-	private long maxSleepingTime;
-	private long lastTime;
+	private long mMaxSleepingTime;
+	private long mLastTime;
 
 	/**
 	 * 
@@ -45,16 +45,16 @@ public class ThreadFromPool extends Thread {
 	 *            This is the time in milliseconds which this thread will wait
 	 *            until end if is inactive. So after maxInactiveTime if any task
 	 *            is assigned, this thread will be removed. If this value is 0,
-	 *            this thread allays will be alive until stop it.
+	 *            this thread allays will be alive until mStop it.
 	 */
 	public ThreadFromPool(int id, OnFinishTaskListener onFinishTaskListener,
 			OnThreadFromPoolStop onThreadFromPoolStop, long maxInactiveTime) {
-		this.taskListener = onFinishTaskListener;
-		this.id = id;
-		this.onThreadFromPoolStop = onThreadFromPoolStop;
-		taskList = new Vector<Task>(1, 1);
-		stop = false;
-		maxSleepingTime = maxInactiveTime;
+		mTaskListener = onFinishTaskListener;
+		mId = id;
+		mOnThreadFromPoolStop = onThreadFromPoolStop;
+		mTaskList = new Vector<Task>(1, 1);
+		mStop = false;
+		mMaxSleepingTime = maxInactiveTime;
 	}
 
 	/**
@@ -66,8 +66,8 @@ public class ThreadFromPool extends Thread {
 	 * @param maxSleepingTime
 	 */
 	public void setMaxThreadInactiveTime(long maxSleepingTime) {
-		if (this.maxSleepingTime != maxSleepingTime) {
-			this.maxSleepingTime = maxSleepingTime;
+		if (mMaxSleepingTime != maxSleepingTime) {
+			mMaxSleepingTime = maxSleepingTime;
 			wakeUp();
 		}
 	}
@@ -78,7 +78,7 @@ public class ThreadFromPool extends Thread {
 	 * @return
 	 */
 	public long getIdTask() {
-		return id;
+		return mId;
 	}
 
 	/**
@@ -86,14 +86,14 @@ public class ThreadFromPool extends Thread {
 	 */
 	public void stopTask() {
 
-		taskList.removeAllElements();
-		if (onThreadFromPoolStop != null) {
-			onThreadFromPoolStop.onThreadStops(this);
+		mTaskList.removeAllElements();
+		if (mOnThreadFromPoolStop != null) {
+			mOnThreadFromPoolStop.onThreadStops(this);
 		}
 
-		synchronized (lock) {
-			stop = true;
-			lock.notify();
+		synchronized (mLock) {
+			mStop = true;
+			mLock.notify();
 		}
 		
 		//stop();
@@ -114,19 +114,19 @@ public class ThreadFromPool extends Thread {
 	 * @return Return true if the task has been added, false otherwise.
 	 */
 	public synchronized boolean addTask(Task task) {
-		if (taskList.size() > 1) {
+		if (mTaskList.size() > 1) {
 			// LogCat.i(tag,
 			// "WARNINGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGg  "
 			// + task.getIdTask());
 		}
 
-		synchronized (lock) {
-			if (stop) {
+		synchronized (mLock) {
+			if (mStop) {
 				return false;
 			}
-			lock.notify();
-			taskList.addElement(task);
-			// LogCat.i(tag, "====thead id=" + id + "  Task id=" +
+			mLock.notify();
+			mTaskList.addElement(task);
+			// LogCat.i(tag, "====thead mId=" + mId + "  Task mId=" +
 			// task.getIdTask());
 		}
 		return true;
@@ -136,8 +136,8 @@ public class ThreadFromPool extends Thread {
 	 * Force the thread to check for new tasks
 	 */
 	public void wakeUp() {
-		synchronized (lock) {
-			lock.notify();
+		synchronized (mLock) {
+			mLock.notify();
 		}
 	}
 
@@ -151,47 +151,47 @@ public class ThreadFromPool extends Thread {
 	 *            The result of this task
 	 */
 	private void finalizeTask(Task task, TaskResult result) {
-		if (taskListener != null) {
-			taskListener.onFinishTask(result, task, this);
+		if (mTaskListener != null) {
+			mTaskListener.onFinishTask(result, task, this);
 		}
 	}
 
 	public void run() {
-		while (!stop) {
+		while (!mStop) {
 
-			for (int i = 0; i < taskList.size(); i++) {
+			for (int i = 0; i < mTaskList.size(); i++) {
 
-				Task task = (Task) taskList.elementAt(i);
+				Task task = (Task) mTaskList.elementAt(i);
 
 				// LogCat.i(tag, "###Running task " + task.getIdTask());
 				TaskResult result = task.executeTask();
 
 				finalizeTask(task, result);
 
-				synchronized (lock) {
-					if (taskList.size() > 0) {
-						taskList.removeElementAt(i);
+				synchronized (mLock) {
+					if (mTaskList.size() > 0) {
+						mTaskList.removeElementAt(i);
 						i--;
 					}
 				}
 			}
 
-			synchronized (lock) {
-				if (!stop && taskList.size() == 0) {
+			synchronized (mLock) {
+				if (!mStop && mTaskList.size() == 0) {
 					try {
-						lastTime = System.currentTimeMillis();
-						lock.wait(maxSleepingTime);
-						//long timeT = (System.currentTimeMillis() - lastTime);
+						mLastTime = System.currentTimeMillis();
+						mLock.wait(mMaxSleepingTime);
+						//long timeT = (System.currentTimeMillis() - mLastTime);
 						// LogCat.i(tag, "*************  timeT=" + timeT
-						// + " Max Sleepingtime=" + maxSleepingTime);
-						if ((System.currentTimeMillis() - lastTime) > maxSleepingTime
-								&& taskList.size() == 0) {
-							stop = true;
+						// + " Max Sleepingtime=" + mMaxSleepingTime);
+						if ((System.currentTimeMillis() - mLastTime) > mMaxSleepingTime
+								&& mTaskList.size() == 0) {
+							mStop = true;
 							// LogCat.i(tag,
-							// "Thread Killed!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!   id="
+							// "Thread Killed!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!   mId="
 							// + getIdTask());
-							if (onThreadFromPoolStop != null) {
-								onThreadFromPoolStop.onThreadStops(this);
+							if (mOnThreadFromPoolStop != null) {
+								mOnThreadFromPoolStop.onThreadStops(this);
 							}
 							return;
 						}

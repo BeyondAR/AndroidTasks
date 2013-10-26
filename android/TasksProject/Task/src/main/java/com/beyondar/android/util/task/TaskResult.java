@@ -51,12 +51,12 @@ public class TaskResult {
 	 */
 	public static final int TASK_MESSAGE_WAIT_OTHER_TASK_TO_FINISH = TASK_MESSAGE_UNKNOW + 103;
 
-	private final long _id;
-	private final Object _result;
-	private final String _strData;
-	private final int _msg;
-	private final boolean _error;
-	private final boolean _saveToHistory;
+	private final long mId;
+	private final Object mResult;
+	private final String mStrData;
+	private final int mMsg;
+	private final boolean mError;
+	private final boolean mSaveToHistory;
 
 	/**
 	 * Generate the task result to handle it with the tasks. With this
@@ -146,12 +146,12 @@ public class TaskResult {
 	 */
 	public TaskResult(long id, boolean error, int msg, String strData,
 			Object result, boolean saveToHistory) {
-		_error = error;
-		_msg = msg;
-		_strData = strData;
-		_result = result;
-		_id = id;
-		_saveToHistory = saveToHistory;
+		mError = error;
+		mMsg = msg;
+		mStrData = strData;
+		mResult = result;
+		mId = id;
+		mSaveToHistory = saveToHistory;
 	}
 
 	/**
@@ -160,14 +160,14 @@ public class TaskResult {
 	 * @return true to save it, false otherwise
 	 */
 	public boolean saveToHistory() {
-		return _saveToHistory;
+		return mSaveToHistory;
 	}
 
 	/**
 	 * Get the task id that has produced this {@link TaskResult}
 	 */
 	public long idTask() {
-		return _id;
+		return mId;
 	}
 
 	/**
@@ -176,7 +176,7 @@ public class TaskResult {
 	 * @return true if there was an error, false otherwise
 	 */
 	public boolean error() {
-		return _error;
+		return mError;
 	}
 
 	/**
@@ -185,7 +185,7 @@ public class TaskResult {
 	 * @return
 	 */
 	public int msg() {
-		return _msg;
+		return mMsg;
 	}
 
 	/**
@@ -194,7 +194,7 @@ public class TaskResult {
 	 * @return
 	 */
 	public String stringMsg() {
-		return _strData;
+		return mStrData;
 	}
 
 	/**
@@ -203,7 +203,7 @@ public class TaskResult {
 	 * @return
 	 */
 	public Object objectMsg() {
-		return _result;
+		return mResult;
 	}
 
 }
