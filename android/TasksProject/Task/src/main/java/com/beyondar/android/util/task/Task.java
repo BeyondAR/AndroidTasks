@@ -20,7 +20,7 @@ package com.beyondar.android.util.task;
  *         This is the task where the developer can define the stuff to do
  * 
  */
-public abstract class Task {
+public abstract class Task implements TaskStub{
 
 	public static final int TASK_TYPE_NORMAL = 6978;
 	public static final int TASK_TYPE_TIMER = TASK_TYPE_NORMAL + 1;
@@ -89,7 +89,7 @@ public abstract class Task {
 
 		// out = task.preprocessor();
 		// if (out == null) {
-		// out = new TaskResult(false, TaskResult.TASK_MESSAGE_UNKNOW, null,
+		// out = new TaskResult(false, TaskResult.TASK_MESSAGE_UNKNOWN, null,
 		// null);
 		// }
 		// if (out.error()) {
@@ -100,7 +100,7 @@ public abstract class Task {
 		out = checkDependencies();
 
 		if (out == null) {
-			out = new TaskResult(mId, false, TaskResult.TASK_MESSAGE_UNKNOW,
+			out = new TaskResult(mId, false, TaskResult.TASK_MESSAGE_UNKNOWN,
 					null, null);
 		}
 		if (out.msg() == TaskResult.TASK_MESSAGE_WAIT_OTHER_TASK_TO_FINISH) {
@@ -108,7 +108,7 @@ public abstract class Task {
 			return out;
 		}
 		mWaitTaskToFinish = false;
-		if (out.error() || out.msg() == TaskResult.TASK_MESSAGE_ERROR_CHEKING_DEPENDENCIES) {
+		if (out.error() || out.msg() == TaskResult.TASK_MESSAGE_ERROR_CHECKING_DEPENDENCIES) {
 			onKillTask(out);
 			mRunning = false;
 			return out;
@@ -117,7 +117,7 @@ public abstract class Task {
 		out = runTask();
 
 		if (out == null) {
-			out = new TaskResult(mId, false, TaskResult.TASK_MESSAGE_UNKNOW,
+			out = new TaskResult(mId, false, TaskResult.TASK_MESSAGE_UNKNOWN,
 					null, null);
 		}
 		if (out.error()) {
@@ -206,20 +206,6 @@ public abstract class Task {
 	 *         {@link TaskResult} erro's flag to stop the process.
 	 */
 	public TaskResult checkDependencies(){ return null;};
-
-	/**
-	 * The method where all the stuff is done.
-	 * 
-	 * @return ({@link TaskResult} with the info about the process. Set the
-	 *         {@link TaskResult} erro's flag to stop the process.
-	 */
-	public abstract TaskResult runTask();
-
-	/**
-	 * Override this method to execute the last method before finish the task
-	 * 
-	 */
-	public void onFinish(){};
 
 	/**
 	 * This method is called when the task is killed. Override this method to manage when the task is killed

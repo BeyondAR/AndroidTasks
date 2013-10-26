@@ -77,7 +77,7 @@ public class TaskExecutor {
 	 * 
 	 * @return The instance with a new TaskExecutor.
 	 */
-	public static TaskExecutor createNewInstance(int maxThreads, long maxThreadInactiveTime) {
+	public static TaskExecutor newInstance(int maxThreads, long maxThreadInactiveTime) {
 
 		return new TaskExecutor(maxThreads, maxThreadInactiveTime);
 	}
