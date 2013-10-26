@@ -15,7 +15,7 @@
  */
 package com.beyondar.android.util.task;
 
-public abstract class TimerTask extends Task {
+public abstract class TimerTask extends BaseTask {
 
 	private long lastExecution;
 	private long timer;

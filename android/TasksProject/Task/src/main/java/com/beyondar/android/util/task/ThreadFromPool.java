@@ -24,7 +24,7 @@ public class ThreadFromPool extends Thread {
 	private long mId;
 
 	private boolean mStop;
-	private Vector<Task> mTaskList;
+	private Vector<BaseTask> mTaskList;
 	private OnThreadFromPoolStop mOnThreadFromPoolStop;
 	private OnFinishTaskListener mTaskListener;
 
@@ -52,7 +52,7 @@ public class ThreadFromPool extends Thread {
 		mTaskListener = onFinishTaskListener;
 		mId = id;
 		mOnThreadFromPoolStop = onThreadFromPoolStop;
-		mTaskList = new Vector<Task>(1, 1);
+		mTaskList = new Vector<BaseTask>(1, 1);
 		mStop = false;
 		mMaxSleepingTime = maxInactiveTime;
 	}
@@ -113,7 +113,7 @@ public class ThreadFromPool extends Thread {
 	 *            next task
 	 * @return Return true if the task has been added, false otherwise.
 	 */
-	public synchronized boolean addTask(Task task) {
+	public synchronized boolean addTask(BaseTask task) {
 		if (mTaskList.size() > 1) {
 			// LogCat.i(tag,
 			// "WARNINGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGg  "
@@ -126,7 +126,7 @@ public class ThreadFromPool extends Thread {
 			}
 			mLock.notify();
 			mTaskList.addElement(task);
-			// LogCat.i(tag, "====thead mId=" + mId + "  Task mId=" +
+			// LogCat.i(tag, "====thead mId=" + mId + "  BaseTask mId=" +
 			// task.getTaskId());
 		}
 		return true;
@@ -150,7 +150,7 @@ public class ThreadFromPool extends Thread {
 	 * @param result
 	 *            The result of this task
 	 */
-	private void finalizeTask(Task task, TaskResult result) {
+	private void finalizeTask(BaseTask task, TaskResult result) {
 		if (mTaskListener != null) {
 			mTaskListener.onFinishTask(result, task, this);
 		}
@@ -161,7 +161,7 @@ public class ThreadFromPool extends Thread {
 
 			for (int i = 0; i < mTaskList.size(); i++) {
 
-				Task task = (Task) mTaskList.elementAt(i);
+				BaseTask task = (BaseTask) mTaskList.elementAt(i);
 
 				// LogCat.i(tag, "###Running task " + task.getTaskId());
 				TaskResult result = task.executeTask();

@@ -20,7 +20,7 @@ import java.util.List;
 
 /**
  * 
- *         This class manage the all {@link Task}'s instances to create an
+ *         This class manage the all {@link BaseTask}'s instances to create an
  *         efficient way to do it.
  * 
  */
@@ -31,10 +31,10 @@ public class TaskExecutor {
 	private static volatile TaskExecutor sThis;
 
 	/** Timer queue for asynchronous tasks */
-	private ArrayList<Task> mQueueAsyncTasks;
+	private ArrayList<BaseTask> mQueueAsyncTasks;
 
 	/** FIFO Queue for synchronous tasks */
-	private ArrayList<Task> mQueueSyncTasks;
+	private ArrayList<BaseTask> mQueueSyncTasks;
 
 	private ArrayList<TaskResult> mTaskHistory;
 
@@ -54,8 +54,8 @@ public class TaskExecutor {
 	private TaskExecutor(int maxThreads, long maxThreadInactiveTime) {
 		mTimeToWait = -1;
 		mTaskHistory = new ArrayList<TaskResult>();
-		mQueueSyncTasks = new ArrayList<Task>();
-		mQueueAsyncTasks = new ArrayList<Task>();
+		mQueueSyncTasks = new ArrayList<BaseTask>();
+		mQueueAsyncTasks = new ArrayList<BaseTask>();
 		mCoreThread = new CoreThread();
 		mPool = new PoolThreads(maxThreads, maxThreadInactiveTime);
 		mPool.setOnFinishTaskListener(mCoreThread);
@@ -123,14 +123,14 @@ public class TaskExecutor {
 	}
 
 	/**
-	 * Add {@link Task} or {@link TimerTask}. It will be processed depending of
+	 * Add {@link BaseTask} or {@link TimerTask}. It will be processed depending of
 	 * the type
 	 * 
 	 * @param task
 	 */
-	public synchronized void addTask(Task task) {
+	public synchronized void addTask(BaseTask task) {
 		// LogCat.i(tag, "Adding task id =" + task.getTaskId());
-		if (task.getTaskType() == Task.TASK_TYPE_TIMER) {
+		if (task.getTaskType() == BaseTask.TASK_TYPE_TIMER) {
 			mQueueAsyncTasks.add(task);
 		} else {
 			mQueueSyncTasks.add(task);
@@ -198,7 +198,7 @@ public class TaskExecutor {
 	}
 
 	/**
-	 * Remove all Task form the task manager. The task that are already running
+	 * Remove all BaseTask form the task manager. The task that are already running
 	 * will be removed when they will finish the task
 	 * 
 	 */
@@ -216,7 +216,7 @@ public class TaskExecutor {
 	}
 
 	/**
-	 * Remove all sync tasks ({@link Task}) form the task manager
+	 * Remove all sync tasks ({@link BaseTask}) form the task manager
 	 */
 	public void removeQueuedSyncTask() {
 		mQueueSyncTasks.clear();
@@ -406,13 +406,13 @@ public class TaskExecutor {
 					// LogCat.i(tag, " IS TIMEEEEEEEEEEEEE: lastExec=" +
 					// lastExec
 					// + " task.getTimer()=" + task.getTimer()
-					// + " Task id=" + task.getTaskId());
+					// + " BaseTask id=" + task.getTaskId());
 				}
 				if (task.isKillable()) {
 					task.onKillTask(new TaskResult(task.getIdTask(), false, TaskResult.TASK_MESSAGE_REMOVED,
-							"Task removed! Reasons: the flag killable has been activated", null));
+							"BaseTask removed! Reasons: the flag killable has been activated", null));
 					mQueueAsyncTasks.remove(task);
-				} else if (checkTaskBefoerExecute(task) && isTime
+				} else if (checkTaskBeforeExecute(task) && isTime
 						&& ((mIsBackground && task.backGroundRunnable()) || !mIsBackground)) {
 
 					ThreadFromPool freeThread = mPool.getFreeThread();
@@ -445,9 +445,9 @@ public class TaskExecutor {
 			boolean result = false;
 			for (int i = 0; i < mQueueSyncTasks.size(); i++) {
 				if (!mIsBackground) {
-					Task task = mQueueSyncTasks.get(i);
+					BaseTask task = mQueueSyncTasks.get(i);
 
-					if (checkTaskBefoerExecute(task)) {
+					if (checkTaskBeforeExecute(task)) {
 
 						ThreadFromPool freeThread = mPool.getFreeThread();
 						if (freeThread != null) {
@@ -479,7 +479,7 @@ public class TaskExecutor {
 		 * @param task
 		 * @return
 		 */
-		private boolean checkTaskBefoerExecute(Task task) {
+		private boolean checkTaskBeforeExecute(BaseTask task) {
 			if (task.isRunning()) {
 				return false;
 			}
@@ -494,16 +494,16 @@ public class TaskExecutor {
 			return false;
 		}
 
-		public void onFinishTask(TaskResult result, Task task, ThreadFromPool thread) {
+		public void onFinishTask(TaskResult result, BaseTask task, ThreadFromPool thread) {
 
 			if (result.msg() == TaskResult.TASK_MESSAGE_WAIT_OTHER_TASK_TO_FINISH
-					&& task.getTaskType() != Task.TASK_TYPE_TIMER) {
+					&& task.getTaskType() != BaseTask.TASK_TYPE_TIMER) {
 				addTask(task);
 			} else if (result.saveToHistory()) {
 				mTaskHistory.add(result);
 			}
 
-			// LogCat.i(tag, "The Task (id=" + id +
+			// LogCat.i(tag, "The BaseTask (id=" + id +
 			// ") has finished. Error code ="
 			// + result.error());
 

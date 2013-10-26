@@ -21,7 +21,7 @@ public interface TaskStub {
      * The method where all the stuff is done.
      *
      * @return ({@link TaskResult} with the info about the process. Set the
-     *         {@link TaskResult} erro's flag to stop the process.
+     *         {@link TaskResult} error's flag to stop the process.
      */
     public TaskResult runTask();
 

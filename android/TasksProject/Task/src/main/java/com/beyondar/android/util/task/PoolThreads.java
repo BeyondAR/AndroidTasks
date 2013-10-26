@@ -208,7 +208,7 @@ public class PoolThreads implements OnFinishTaskListener, OnThreadFromPoolStop {
 		this.mOnFinishTaskListener = onFinishTaskListener;
 	}
 
-	public void onFinishTask(TaskResult result, Task task, ThreadFromPool thread) {
+	public void onFinishTask(TaskResult result, BaseTask task, ThreadFromPool thread) {
 		if (mKillThreads) {
 			thread.stopTask();
 		} else {

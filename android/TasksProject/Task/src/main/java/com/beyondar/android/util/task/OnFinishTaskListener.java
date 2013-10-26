@@ -27,6 +27,6 @@ public interface OnFinishTaskListener {
 	 * @param thread
 	 *            The {@link ThreadFromPool} instance that has executed the task
 	 */
-	public void onFinishTask(TaskResult result, Task task, ThreadFromPool thread);
+	public void onFinishTask(TaskResult result, BaseTask task, ThreadFromPool thread);
 
 }
