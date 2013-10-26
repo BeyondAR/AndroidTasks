@@ -215,7 +215,7 @@ public class PoolThreads implements OnFinishTaskListener, OnThreadFromPoolStop {
 
 			thread.setMaxThreadInactiveTime(mMaxThreadInactiveTime);
 			mFreeThreadPool.add(thread);
-			// LogCat.i(tag, "Adding thread from task id=" + task.getIdTask());
+			// LogCat.i(tag, "Adding thread from task id=" + task.getTaskId());
 		}
 		if (mOnFinishTaskListener != null && task != null) {
 			mOnFinishTaskListener.onFinishTask(result, task, null);
@@ -224,7 +224,7 @@ public class PoolThreads implements OnFinishTaskListener, OnThreadFromPoolStop {
 
 	public void onThreadStops(ThreadFromPool thread) {
 		removeThread(thread);
-		// LogCat.i(tag, "-- id Thread=" + thread.getIdTask() +
+		// LogCat.i(tag, "-- id Thread=" + thread.getTaskId() +
 		// " has been stopped");
 
 	}

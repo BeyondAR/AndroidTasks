@@ -129,7 +129,7 @@ public class TaskExecutor {
 	 * @param task
 	 */
 	public synchronized void addTask(Task task) {
-		// LogCat.i(tag, "Adding task id =" + task.getIdTask());
+		// LogCat.i(tag, "Adding task id =" + task.getTaskId());
 		if (task.getTaskType() == Task.TASK_TYPE_TIMER) {
 			mQueueAsyncTasks.add(task);
 		} else {
@@ -406,7 +406,7 @@ public class TaskExecutor {
 					// LogCat.i(tag, " IS TIMEEEEEEEEEEEEE: lastExec=" +
 					// lastExec
 					// + " task.getTimer()=" + task.getTimer()
-					// + " Task id=" + task.getIdTask());
+					// + " Task id=" + task.getTaskId());
 				}
 				if (task.isKillable()) {
 					task.onKillTask(new TaskResult(task.getIdTask(), false, TaskResult.TASK_MESSAGE_REMOVED,
@@ -418,14 +418,14 @@ public class TaskExecutor {
 					ThreadFromPool freeThread = mPool.getFreeThread();
 					if (freeThread != null) {
 						// LogCat.i(tag, "Running AsincTask. id=" +
-						// task.getIdTask());
+						// task.getTaskId());
 						if (!freeThread.addTask(task)) {
 							i--;
 						}
 					} else {
 						// LogCat.i(tag,
 						// "(AsyncTasks)No Threads available, waiting...   id="
-						// + task.getIdTask());
+						// + task.getTaskId());
 						break;
 
 					}
@@ -454,14 +454,14 @@ public class TaskExecutor {
 							if (freeThread.addTask(task)) {
 								mQueueSyncTasks.remove(task);
 								// LogCat.i(tag,
-								// "# Running task. id=" + task.getIdTask());
+								// "# Running task. id=" + task.getTaskId());
 							}
 							i--;
 
 						} else {
 							// LogCat.i(tag,
 							// "$ (SyncTasks)No Threads available, waiting...   id="
-							// + task.getIdTask());
+							// + task.getTaskId());
 							break;
 
 						}

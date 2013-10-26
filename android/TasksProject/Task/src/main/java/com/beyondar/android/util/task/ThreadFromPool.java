@@ -77,7 +77,7 @@ public class ThreadFromPool extends Thread {
 	 * 
 	 * @return
 	 */
-	public long getIdTask() {
+	public long getTaskId() {
 		return mId;
 	}
 
@@ -117,7 +117,7 @@ public class ThreadFromPool extends Thread {
 		if (mTaskList.size() > 1) {
 			// LogCat.i(tag,
 			// "WARNINGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGg  "
-			// + task.getIdTask());
+			// + task.getTaskId());
 		}
 
 		synchronized (mLock) {
@@ -127,7 +127,7 @@ public class ThreadFromPool extends Thread {
 			mLock.notify();
 			mTaskList.addElement(task);
 			// LogCat.i(tag, "====thead mId=" + mId + "  Task mId=" +
-			// task.getIdTask());
+			// task.getTaskId());
 		}
 		return true;
 	}
@@ -163,7 +163,7 @@ public class ThreadFromPool extends Thread {
 
 				Task task = (Task) mTaskList.elementAt(i);
 
-				// LogCat.i(tag, "###Running task " + task.getIdTask());
+				// LogCat.i(tag, "###Running task " + task.getTaskId());
 				TaskResult result = task.executeTask();
 
 				finalizeTask(task, result);
@@ -189,7 +189,7 @@ public class ThreadFromPool extends Thread {
 							mStop = true;
 							// LogCat.i(tag,
 							// "Thread Killed!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!   mId="
-							// + getIdTask());
+							// + getTaskId());
 							if (mOnThreadFromPoolStop != null) {
 								mOnThreadFromPoolStop.onThreadStops(this);
 							}
