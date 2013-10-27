@@ -28,31 +28,24 @@ public class TaskExecutor {
 
 	// private String tag = "TaskExecutor";
 
+    private static Object mLockStatic =  new Object();
 	private static volatile TaskExecutor sThis;
-
+	private Object mLock;
 	/** Timer queue for asynchronous tasks */
 	private ArrayList<BaseTask> mQueueAsyncTasks;
-
 	/** FIFO Queue for synchronous tasks */
 	private ArrayList<BaseTask> mQueueSyncTasks;
-
 	private ArrayList<TaskResult> mTaskHistory;
-
 	private PoolThreads mPool;
-
 	private Object mSharedLock = new Object();
-
-	private CoreThread mCoreThread;;
-
-	private static Object mLock = new Object();
-
-	/** set this to -1 to wait until a new task arrive */
+    private CoreThread mCoreThread;
+	/* set this to -1 to wait until a new task arrive */
 	private long mTimeToWait;
-
 	private boolean mIsBackground;
 
 	private TaskExecutor(int maxThreads, long maxThreadInactiveTime) {
-		mTimeToWait = -1;
+        mLock = new Object();
+        mTimeToWait = -1;
 		mTaskHistory = new ArrayList<TaskResult>();
 		mQueueSyncTasks = new ArrayList<BaseTask>();
 		mQueueAsyncTasks = new ArrayList<BaseTask>();
@@ -90,7 +83,7 @@ public class TaskExecutor {
 	public static TaskExecutor getInstance() {
 
 		if (sThis == null) {
-			synchronized (mLock) {
+			synchronized (mLockStatic) {
 				if (sThis == null) {
 					sThis = new TaskExecutor(PoolThreads.DEFAULT_MAX_THREADS,
 							PoolThreads.DEFAULT_MAX_THREAD_INACTIVE_TIME);
@@ -101,25 +94,25 @@ public class TaskExecutor {
 	}
 
 	/**
+	 * Get the maximum time which a thread will be inactive before being removed
+	 *
+	 * @return
+	 */
+	public long getMaxInactiveTimeThread() {
+		return mPool.getMaxThreadInactiveTime();
+	}
+
+	/**
 	 * When the pool will create a thread, it will uses this time to set the max
 	 * inactive time for a thread before being removed. Using this method, the
 	 * system will remove all the existing threads from the pool (The current
 	 * task, if there are any task being executed, will be finished as expected)
-	 * 
-	 * @param maxThreadInactiveTime
+	 *
+	 * @param maxInactiveTimeThread
 	 *            The new time in milliseconds
 	 */
-	public void setMaxThradInactiveTime(long maxThreadInactiveTime) {
-		mPool.setMaxThreadInactiveTime(maxThreadInactiveTime);
-	}
-
-	/**
-	 * Get the maximum time which a thread will be inactive before being removed
-	 * 
-	 * @return
-	 */
-	public long getMaxThradInactiveTime() {
-		return mPool.getMaxThreadInactiveTime();
+	public void setMaxThreadInactiveTime(long maxInactiveTimeThread) {
+		mPool.setMaxThreadInactiveTime(maxInactiveTimeThread);
 	}
 
 	/**
@@ -146,14 +139,14 @@ public class TaskExecutor {
 	 * Don't forget to call wakeUp() to notify the taskExecutor
 	 */
 	public void sleep() {
-		this.mIsBackground = true;
+		mIsBackground = true;
 	}
 
 	/**
 	 * After a sleep, wake up the TaskExecutor
 	 */
 	public void wakeUp() {
-		this.mIsBackground = false;
+		mIsBackground = false;
 		mCoreThread.processTasks();
 	}
 
@@ -182,7 +175,7 @@ public class TaskExecutor {
 	 * assigned to a thread will be processed, but not the others. < br>
 	 * 
 	 * IMPORTANT!!! All the TaskExecutor configuration saved, like
-	 * temporalThreads() ,setMaxThradInactiveTime(), etc, will not be saved.
+	 * temporalThreads() ,setMaxThreadInactiveTime(), etc, will not be saved.
 	 */
 	public void stopTaskExecutor() {
 		enableTemporalThreads();
@@ -203,14 +196,14 @@ public class TaskExecutor {
 	 * 
 	 */
 	public void removeAllQueuedTask() {
-		removeQueuedAsincTask();
+		removeQueuedAsyncTask();
 		removeQueuedSyncTask();
 	}
 
 	/**
-	 * Remove all asinctasks ({@link TimerTask}) form the task manager.
+	 * Remove all asynchronous tasks ({@link TimerTask}) form the task manager.
 	 */
-	public void removeQueuedAsincTask() {
+	public void removeQueuedAsyncTask() {
 		mQueueAsyncTasks.clear();
 
 	}
@@ -271,11 +264,11 @@ public class TaskExecutor {
 	public boolean cleanHistory(TaskResult result) {
 		return mTaskHistory.remove(result);
 	}
+
 	private class CoreThread extends Thread implements OnFinishTaskListener {
 
-		private boolean stop = false;
-
 		private final Object lock;
+		private boolean stop = false;
 
 		/**
 		 * Create the core thread, Use the lock to synchronize the wait and
@@ -283,7 +276,7 @@ public class TaskExecutor {
 		 * 
 		 */
 		private CoreThread() {
-			this.lock = mSharedLock;
+			lock = mSharedLock;
 		}
 
 		/**
@@ -366,7 +359,7 @@ public class TaskExecutor {
 		}
 
 		/**
-		 * Check all the AsynTask and get the shortest time to wait
+		 * Check all the asynchronous tasks and get the shortest time to wait
 		 */
 		private void calculateTimeToWait() {
 			if (mQueueAsyncTasks.size() == 0) {
@@ -403,7 +396,7 @@ public class TaskExecutor {
 				long lastExec = (System.currentTimeMillis() - task.getLastExecutionTime());
 				boolean isTime = (lastExec >= task.getTimer()) || task.getLastExecutionTime() == 0;
 				if (isTime) {
-					// LogCat.i(tag, " IS TIMEEEEEEEEEEEEE: lastExec=" +
+					// LogCat.i(tag, " IS TIME: lastExec=" +
 					// lastExec
 					// + " task.getTimer()=" + task.getTimer()
 					// + " BaseTask id=" + task.getTaskId());
@@ -417,7 +410,7 @@ public class TaskExecutor {
 
 					ThreadFromPool freeThread = mPool.getFreeThread();
 					if (freeThread != null) {
-						// LogCat.i(tag, "Running AsincTask. id=" +
+						// LogCat.i(tag, "Running AsyncTask. id=" +
 						// task.getTaskId());
 						if (!freeThread.addTask(task)) {
 							i--;
@@ -509,7 +502,5 @@ public class TaskExecutor {
 
 			processTasks();
 		}
-
 	}
-
 }
