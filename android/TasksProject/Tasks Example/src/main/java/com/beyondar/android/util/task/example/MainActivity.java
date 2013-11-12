@@ -39,7 +39,7 @@ public class MainActivity extends Activity implements AdapterView.OnItemClickLis
     public void onItemClick(AdapterView<?> arg0, View arg1, int pos, long arg3) {
         switch (pos) {
             case 0:
-                openActivity(TaskWithUiThreadAccess.class);
+                openActivity(TaskWithUiThreadAccessActivity.class);
                 break;
             case 1:
                 break;

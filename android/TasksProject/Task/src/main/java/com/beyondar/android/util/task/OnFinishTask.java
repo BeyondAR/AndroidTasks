@@ -15,5 +15,13 @@
  */
 package com.beyondar.android.util.task;
 
-public interface Task extends RunnableTask, OnFinishTask{
+public interface OnFinishTask{
+
+    public static final String __ON_FINISH_METHOD_NAME__ = "onFinish";
+
+    /**
+     * Override this method to execute the last method before finish the task
+     *
+     */
+    public void onFinish();
 }

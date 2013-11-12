@@ -15,5 +15,22 @@
  */
 package com.beyondar.android.util.task;
 
-public interface Task extends RunnableTask, OnFinishTask{
+public class SimpleTask extends BaseTask
+{
+    private Task mTask;
+
+    public SimpleTask(Task task){
+        super(task.hashCode());
+        mTask = task;
+    }
+
+    @Override
+    public TaskResult runTask() {
+        return mTask.runTask();
+    }
+
+    @Override
+    public void onFinish() {
+        mTask.onFinish();
+    }
 }

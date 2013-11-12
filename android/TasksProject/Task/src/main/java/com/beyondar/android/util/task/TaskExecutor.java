@@ -15,12 +15,15 @@
  */
 package com.beyondar.android.util.task;
 
+import android.os.Handler;
+import android.os.Looper;
+
 import java.util.ArrayList;
 import java.util.List;
 
 /**
  * 
- *         This class manage the all {@link Task}'s instances to create an
+ *         This class manage the all {@link BaseTask}'s instances to create an
  *         efficient way to do it.
  * 
  */
@@ -28,34 +31,27 @@ public class TaskExecutor {
 
 	// private String tag = "TaskExecutor";
 
+    private static Object mLockStatic =  new Object();
 	private static volatile TaskExecutor sThis;
-
+	private Object mLock;
 	/** Timer queue for asynchronous tasks */
-	private ArrayList<Task> mQueueAsyncTasks;
-
+	private ArrayList<BaseTask> mQueueAsyncTasks;
 	/** FIFO Queue for synchronous tasks */
-	private ArrayList<Task> mQueueSyncTasks;
-
+	private ArrayList<BaseTask> mQueueSyncTasks;
 	private ArrayList<TaskResult> mTaskHistory;
-
 	private PoolThreads mPool;
-
 	private Object mSharedLock = new Object();
-
-	private CoreThread mCoreThread;;
-
-	private static Object mLock = new Object();
-
-	/** set this to -1 to wait until a new task arrive */
+    private CoreThread mCoreThread;
+	/* set this to -1 to wait until a new task arrive */
 	private long mTimeToWait;
-
 	private boolean mIsBackground;
 
 	private TaskExecutor(int maxThreads, long maxThreadInactiveTime) {
-		mTimeToWait = -1;
+        mLock = new Object();
+        mTimeToWait = -1;
 		mTaskHistory = new ArrayList<TaskResult>();
-		mQueueSyncTasks = new ArrayList<Task>();
-		mQueueAsyncTasks = new ArrayList<Task>();
+		mQueueSyncTasks = new ArrayList<BaseTask>();
+		mQueueAsyncTasks = new ArrayList<BaseTask>();
 		mCoreThread = new CoreThread();
 		mPool = new PoolThreads(maxThreads, maxThreadInactiveTime);
 		mPool.setOnFinishTaskListener(mCoreThread);
@@ -77,7 +73,7 @@ public class TaskExecutor {
 	 * 
 	 * @return The instance with a new TaskExecutor.
 	 */
-	public static TaskExecutor createNewInstance(int maxThreads, long maxThreadInactiveTime) {
+	public static TaskExecutor newInstance(int maxThreads, long maxThreadInactiveTime) {
 
 		return new TaskExecutor(maxThreads, maxThreadInactiveTime);
 	}
@@ -85,12 +81,12 @@ public class TaskExecutor {
 	/**
 	 * get the unique instance of this class
 	 * 
-	 * @return
+	 * @return Get a unique instance of the executor
 	 */
 	public static TaskExecutor getInstance() {
 
 		if (sThis == null) {
-			synchronized (mLock) {
+			synchronized (mLockStatic) {
 				if (sThis == null) {
 					sThis = new TaskExecutor(PoolThreads.DEFAULT_MAX_THREADS,
 							PoolThreads.DEFAULT_MAX_THREAD_INACTIVE_TIME);
@@ -101,43 +97,46 @@ public class TaskExecutor {
 	}
 
 	/**
-	 * When the pool will create a thread, it will uses this time to set the max
-	 * inactive time for a thread before being removed. Using this method, the
-	 * system will remove all the existing threads from the pool (The current
-	 * task, if there are any task being executed, will be finished as expected)
-	 * 
-	 * @param maxThreadInactiveTime
-	 *            The new time in milliseconds
-	 */
-	public void setMaxThradInactiveTime(long maxThreadInactiveTime) {
-		mPool.setMaxThreadInactiveTime(maxThreadInactiveTime);
-	}
-
-	/**
 	 * Get the maximum time which a thread will be inactive before being removed
-	 * 
-	 * @return
+	 *
+	 * @return Max inactive time per thread
 	 */
-	public long getMaxThradInactiveTime() {
+	public long getMaxInactiveTimeThread() {
 		return mPool.getMaxThreadInactiveTime();
 	}
 
 	/**
-	 * Add {@link Task} or {@link TimerTask}. It will be processed depending of
+	 * When the pool will create a thread, it will uses this time to set the max
+	 * inactive time for a thread before being removed. Using this method, the
+	 * system will remove all the existing threads from the pool (The current
+	 * task, if there are any task being executed, will be finished as expected)
+	 *
+	 * @param maxInactiveTimeThread
+	 *            The new time in milliseconds
+	 */
+	public void setMaxThreadInactiveTime(long maxInactiveTimeThread) {
+		mPool.setMaxThreadInactiveTime(maxInactiveTimeThread);
+	}
+
+	/**
+	 * Add {@link BaseTask} or {@link BaseTimerTask}. It will be processed depending of
 	 * the type
 	 * 
-	 * @param task
+	 * @param task The new task to run
 	 */
 	public synchronized void addTask(Task task) {
-		// LogCat.i(tag, "Adding task id =" + task.getIdTask());
-		if (task.getTaskType() == Task.TASK_TYPE_TIMER) {
-			mQueueAsyncTasks.add(task);
-		} else {
-			mQueueSyncTasks.add(task);
-		}
-		if (!task.isWaitingUntilOtherTaskFinishes()) {
-			mCoreThread.processTasks();
-		}
+		// LogCat.i(tag, "Adding task id =" + task.getTaskId());
+		if (task instanceof BaseTimerTask) {
+			mQueueAsyncTasks.add((BaseTimerTask) task);
+		} else if (task instanceof BaseTask){
+			mQueueSyncTasks.add((BaseTask) task);
+		}else{
+            SimpleTask newTask = new SimpleTask(task);
+            mQueueSyncTasks.add(newTask);
+        }
+		//if (!task.isWaitingUntilOtherTaskFinishes()) {
+		mCoreThread.processTasks();
+		//}
 	}
 
 	/**
@@ -146,14 +145,14 @@ public class TaskExecutor {
 	 * Don't forget to call wakeUp() to notify the taskExecutor
 	 */
 	public void sleep() {
-		this.mIsBackground = true;
+		mIsBackground = true;
 	}
 
 	/**
 	 * After a sleep, wake up the TaskExecutor
 	 */
 	public void wakeUp() {
-		this.mIsBackground = false;
+		mIsBackground = false;
 		mCoreThread.processTasks();
 	}
 
@@ -182,7 +181,7 @@ public class TaskExecutor {
 	 * assigned to a thread will be processed, but not the others. < br>
 	 * 
 	 * IMPORTANT!!! All the TaskExecutor configuration saved, like
-	 * temporalThreads() ,setMaxThradInactiveTime(), etc, will not be saved.
+	 * temporalThreads() ,setMaxThreadInactiveTime(), etc, will not be saved.
 	 */
 	public void stopTaskExecutor() {
 		enableTemporalThreads();
@@ -198,25 +197,25 @@ public class TaskExecutor {
 	}
 
 	/**
-	 * Remove all Task form the task manager. The task that are already running
+	 * Remove all BaseTask form the task manager. The task that are already running
 	 * will be removed when they will finish the task
 	 * 
 	 */
 	public void removeAllQueuedTask() {
-		removeQueuedAsincTask();
+		removeQueuedAsyncTask();
 		removeQueuedSyncTask();
 	}
 
 	/**
-	 * Remove all asinctasks ({@link TimerTask}) form the task manager.
+	 * Remove all asynchronous tasks ({@link BaseTimerTask}) form the task manager.
 	 */
-	public void removeQueuedAsincTask() {
+	public void removeQueuedAsyncTask() {
 		mQueueAsyncTasks.clear();
 
 	}
 
 	/**
-	 * Remove all sync tasks ({@link Task}) form the task manager
+	 * Remove all sync tasks ({@link BaseTask}) form the task manager
 	 */
 	public void removeQueuedSyncTask() {
 		mQueueSyncTasks.clear();
@@ -271,11 +270,11 @@ public class TaskExecutor {
 	public boolean cleanHistory(TaskResult result) {
 		return mTaskHistory.remove(result);
 	}
+
 	private class CoreThread extends Thread implements OnFinishTaskListener {
 
-		private boolean stop = false;
-
 		private final Object lock;
+		private boolean stop = false;
 
 		/**
 		 * Create the core thread, Use the lock to synchronize the wait and
@@ -283,7 +282,7 @@ public class TaskExecutor {
 		 * 
 		 */
 		private CoreThread() {
-			this.lock = mSharedLock;
+			lock = mSharedLock;
 		}
 
 		/**
@@ -366,14 +365,14 @@ public class TaskExecutor {
 		}
 
 		/**
-		 * Check all the AsynTask and get the shortest time to wait
+		 * Check all the asynchronous tasks and get the shortest time to wait
 		 */
 		private void calculateTimeToWait() {
 			if (mQueueAsyncTasks.size() == 0) {
 				mTimeToWait = -1;
 			}
 			for (int i = 0; i < mQueueAsyncTasks.size(); i++) {
-				TimerTask task = (TimerTask) mQueueAsyncTasks.get(i);
+				BaseTimerTask task = (BaseTimerTask) mQueueAsyncTasks.get(i);
 				long last = task.getLastExecutionTime();
 				long timer = task.getTimer();
 				// if (last == 0) {
@@ -398,36 +397,35 @@ public class TaskExecutor {
 		private boolean executeAsyncTasks() {
 			boolean result = false;
 			for (int i = 0; i < mQueueAsyncTasks.size(); i++) {
-				TimerTask task = (TimerTask) mQueueAsyncTasks.get(i);
+				BaseTimerTask task = (BaseTimerTask) mQueueAsyncTasks.get(i);
 				/* check if this task is on time */
 				long lastExec = (System.currentTimeMillis() - task.getLastExecutionTime());
 				boolean isTime = (lastExec >= task.getTimer()) || task.getLastExecutionTime() == 0;
 				if (isTime) {
-					// LogCat.i(tag, " IS TIMEEEEEEEEEEEEE: lastExec=" +
+					// LogCat.i(tag, " IS TIME: lastExec=" +
 					// lastExec
 					// + " task.getTimer()=" + task.getTimer()
-					// + " Task id=" + task.getIdTask());
+					// + " BaseTask id=" + task.getTaskId());
 				}
 				if (task.isKillable()) {
 					task.onKillTask(new TaskResult(task.getIdTask(), false, TaskResult.TASK_MESSAGE_REMOVED,
-							"Task removed! Reasons: the flag killable has been activated", null));
+							"BaseTask removed! Reasons: the flag killable has been activated", null));
 					mQueueAsyncTasks.remove(task);
-				} else if (checkTaskBefoerExecute(task) && isTime
+				} else if (checkTaskBeforeExecute(task) && isTime
 						&& ((mIsBackground && task.backGroundRunnable()) || !mIsBackground)) {
 
 					ThreadFromPool freeThread = mPool.getFreeThread();
 					if (freeThread != null) {
-						// LogCat.i(tag, "Running AsincTask. id=" +
-						// task.getIdTask());
+						// LogCat.i(tag, "Running AsyncTask. id=" +
+						// task.getTaskId());
 						if (!freeThread.addTask(task)) {
 							i--;
 						}
 					} else {
 						// LogCat.i(tag,
 						// "(AsyncTasks)No Threads available, waiting...   id="
-						// + task.getIdTask());
+						// + task.getTaskId());
 						break;
-
 					}
 					result = true;
 				}
@@ -445,41 +443,38 @@ public class TaskExecutor {
 			boolean result = false;
 			for (int i = 0; i < mQueueSyncTasks.size(); i++) {
 				if (!mIsBackground) {
-					Task task = mQueueSyncTasks.get(i);
+					BaseTask task = mQueueSyncTasks.get(i);
 
-					if (checkTaskBefoerExecute(task)) {
+					if (checkTaskBeforeExecute(task)) {
 
 						ThreadFromPool freeThread = mPool.getFreeThread();
 						if (freeThread != null) {
 							if (freeThread.addTask(task)) {
 								mQueueSyncTasks.remove(task);
 								// LogCat.i(tag,
-								// "# Running task. id=" + task.getIdTask());
+								// "# Running task. id=" + task.getTaskId());
 							}
 							i--;
-
 						} else {
 							// LogCat.i(tag,
 							// "$ (SyncTasks)No Threads available, waiting...   id="
-							// + task.getIdTask());
+							// + task.getTaskId());
 							break;
-
 						}
 						result = true;
 					}
 				}
 			}
 			return result;
-
 		}
 
 		/**
 		 * Check if a task should be executed
 		 * 
-		 * @param task
-		 * @return
+		 * @param task The new task to be executed
+		 * @return True if it should be executed
 		 */
-		private boolean checkTaskBefoerExecute(Task task) {
+		private boolean checkTaskBeforeExecute(BaseTask task) {
 			if (task.isRunning()) {
 				return false;
 			}
@@ -494,22 +489,20 @@ public class TaskExecutor {
 			return false;
 		}
 
-		public void onFinishTask(TaskResult result, Task task, ThreadFromPool thread) {
+		public void onFinishTask(TaskResult result, BaseTask task, ThreadFromPool thread) {
 
 			if (result.msg() == TaskResult.TASK_MESSAGE_WAIT_OTHER_TASK_TO_FINISH
-					&& task.getTaskType() != Task.TASK_TYPE_TIMER) {
+					&& !(task instanceof BaseTimerTask)) {
 				addTask(task);
 			} else if (result.saveToHistory()) {
 				mTaskHistory.add(result);
 			}
 
-			// LogCat.i(tag, "The Task (id=" + id +
+			// LogCat.i(tag, "The BaseTask (id=" + id +
 			// ") has finished. Error code ="
 			// + result.error());
 
 			processTasks();
 		}
-
 	}
-
 }

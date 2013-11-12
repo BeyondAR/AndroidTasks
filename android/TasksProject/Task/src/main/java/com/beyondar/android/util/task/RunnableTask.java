@@ -15,5 +15,16 @@
  */
 package com.beyondar.android.util.task;
 
-public interface Task extends RunnableTask, OnFinishTask{
+public interface RunnableTask {
+
+    public static final String __RUN_TASK_METHOD_NAME__ = "runTask";
+
+    /**
+     * The method where all the stuff is done.
+     *
+     * @return ({@link TaskResult} with the info about the process. Set the
+     *         {@link TaskResult} error's flag to stop the process.
+     */
+    public TaskResult runTask();
+
 }
