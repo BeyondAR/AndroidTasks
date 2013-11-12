@@ -15,6 +15,9 @@
  */
 package com.beyondar.android.util.task;
 
+import android.os.Handler;
+import android.os.Looper;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -78,7 +81,7 @@ public class TaskExecutor {
 	/**
 	 * get the unique instance of this class
 	 * 
-	 * @return
+	 * @return Get a unique instance of the executor
 	 */
 	public static TaskExecutor getInstance() {
 
@@ -96,7 +99,7 @@ public class TaskExecutor {
 	/**
 	 * Get the maximum time which a thread will be inactive before being removed
 	 *
-	 * @return
+	 * @return Max inactive time per thread
 	 */
 	public long getMaxInactiveTimeThread() {
 		return mPool.getMaxThreadInactiveTime();
@@ -116,21 +119,24 @@ public class TaskExecutor {
 	}
 
 	/**
-	 * Add {@link BaseTask} or {@link TimerTask}. It will be processed depending of
+	 * Add {@link BaseTask} or {@link BaseTimerTask}. It will be processed depending of
 	 * the type
 	 * 
-	 * @param task
+	 * @param task The new task to run
 	 */
-	public synchronized void addTask(BaseTask task) {
+	public synchronized void addTask(Task task) {
 		// LogCat.i(tag, "Adding task id =" + task.getTaskId());
-		if (task.getTaskType() == BaseTask.TASK_TYPE_TIMER) {
-			mQueueAsyncTasks.add(task);
-		} else {
-			mQueueSyncTasks.add(task);
-		}
-		if (!task.isWaitingUntilOtherTaskFinishes()) {
-			mCoreThread.processTasks();
-		}
+		if (task instanceof BaseTimerTask) {
+			mQueueAsyncTasks.add((BaseTimerTask) task);
+		} else if (task instanceof BaseTask){
+			mQueueSyncTasks.add((BaseTask) task);
+		}else{
+            SimpleTask newTask = new SimpleTask(task);
+            mQueueSyncTasks.add(newTask);
+        }
+		//if (!task.isWaitingUntilOtherTaskFinishes()) {
+		mCoreThread.processTasks();
+		//}
 	}
 
 	/**
@@ -201,7 +207,7 @@ public class TaskExecutor {
 	}
 
 	/**
-	 * Remove all asynchronous tasks ({@link TimerTask}) form the task manager.
+	 * Remove all asynchronous tasks ({@link BaseTimerTask}) form the task manager.
 	 */
 	public void removeQueuedAsyncTask() {
 		mQueueAsyncTasks.clear();
@@ -366,7 +372,7 @@ public class TaskExecutor {
 				mTimeToWait = -1;
 			}
 			for (int i = 0; i < mQueueAsyncTasks.size(); i++) {
-				TimerTask task = (TimerTask) mQueueAsyncTasks.get(i);
+				BaseTimerTask task = (BaseTimerTask) mQueueAsyncTasks.get(i);
 				long last = task.getLastExecutionTime();
 				long timer = task.getTimer();
 				// if (last == 0) {
@@ -391,7 +397,7 @@ public class TaskExecutor {
 		private boolean executeAsyncTasks() {
 			boolean result = false;
 			for (int i = 0; i < mQueueAsyncTasks.size(); i++) {
-				TimerTask task = (TimerTask) mQueueAsyncTasks.get(i);
+				BaseTimerTask task = (BaseTimerTask) mQueueAsyncTasks.get(i);
 				/* check if this task is on time */
 				long lastExec = (System.currentTimeMillis() - task.getLastExecutionTime());
 				boolean isTime = (lastExec >= task.getTimer()) || task.getLastExecutionTime() == 0;
@@ -420,7 +426,6 @@ public class TaskExecutor {
 						// "(AsyncTasks)No Threads available, waiting...   id="
 						// + task.getTaskId());
 						break;
-
 					}
 					result = true;
 				}
@@ -450,27 +455,24 @@ public class TaskExecutor {
 								// "# Running task. id=" + task.getTaskId());
 							}
 							i--;
-
 						} else {
 							// LogCat.i(tag,
 							// "$ (SyncTasks)No Threads available, waiting...   id="
 							// + task.getTaskId());
 							break;
-
 						}
 						result = true;
 					}
 				}
 			}
 			return result;
-
 		}
 
 		/**
 		 * Check if a task should be executed
 		 * 
-		 * @param task
-		 * @return
+		 * @param task The new task to be executed
+		 * @return True if it should be executed
 		 */
 		private boolean checkTaskBeforeExecute(BaseTask task) {
 			if (task.isRunning()) {
@@ -490,7 +492,7 @@ public class TaskExecutor {
 		public void onFinishTask(TaskResult result, BaseTask task, ThreadFromPool thread) {
 
 			if (result.msg() == TaskResult.TASK_MESSAGE_WAIT_OTHER_TASK_TO_FINISH
-					&& task.getTaskType() != BaseTask.TASK_TYPE_TIMER) {
+					&& !(task instanceof BaseTimerTask)) {
 				addTask(task);
 			} else if (result.saveToHistory()) {
 				mTaskHistory.add(result);

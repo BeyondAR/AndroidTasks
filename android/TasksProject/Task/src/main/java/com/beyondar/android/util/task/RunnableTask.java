@@ -15,7 +15,9 @@
  */
 package com.beyondar.android.util.task;
 
-public interface TaskStub {
+public interface RunnableTask {
+
+    public static final String __RUN_TASK_METHOD_NAME__ = "runTask";
 
     /**
      * The method where all the stuff is done.
@@ -25,9 +27,4 @@ public interface TaskStub {
      */
     public TaskResult runTask();
 
-    /**
-     * Override this method to execute the last method before finish the task
-     *
-     */
-    public void onFinish();
 }

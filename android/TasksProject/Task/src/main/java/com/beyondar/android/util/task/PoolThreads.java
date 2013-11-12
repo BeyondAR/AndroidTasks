@@ -26,7 +26,7 @@ import java.util.ArrayList;
 public class PoolThreads implements OnFinishTaskListener, OnThreadFromPoolStop {
 
 	/** Max number of threads in the pool by default */
-	public static final int DEFAULT_MAX_THREADS = 4;
+	public static final int DEFAULT_MAX_THREADS = 10;
 
 	/**
 	 * Max default time (in milliseconds) that a thread will wait without any
@@ -58,7 +58,7 @@ public class PoolThreads implements OnFinishTaskListener, OnThreadFromPoolStop {
 	 *            The maximum number of threads that the pool will allow
 	 */
 	public PoolThreads(int maxThreads) {
-		this.mMaxThreads = maxThreads;
+		mMaxThreads = maxThreads;
 		init(DEFAULT_MAX_THREAD_INACTIVE_TIME);
 
 	}
@@ -69,7 +69,7 @@ public class PoolThreads implements OnFinishTaskListener, OnThreadFromPoolStop {
 	 *
 	 */
 	public PoolThreads() {
-		this.mMaxThreads = DEFAULT_MAX_THREADS;
+		mMaxThreads = DEFAULT_MAX_THREADS;
 		init(DEFAULT_MAX_THREAD_INACTIVE_TIME);
 
 	}
@@ -84,9 +84,9 @@ public class PoolThreads implements OnFinishTaskListener, OnThreadFromPoolStop {
 	 *            set the max inactive time for a thread before being removed
 	 */
 	public PoolThreads(int maxThreads, long maxThreadInactiveTime) {
-		this.mMaxThreads = maxThreads;
+		mMaxThreads = maxThreads;
 		init(maxThreadInactiveTime);
-		this.mMaxThreadInactiveTime = maxThreadInactiveTime;
+		mMaxThreadInactiveTime = maxThreadInactiveTime;
 	}
 
 	/**
@@ -99,7 +99,7 @@ public class PoolThreads implements OnFinishTaskListener, OnThreadFromPoolStop {
 	 *            The new time in milliseconds
 	 */
 	public void setMaxThreadInactiveTime(long maxThreadInactiveTime) {
-		this.mMaxThreadInactiveTime = maxThreadInactiveTime;
+		mMaxThreadInactiveTime = maxThreadInactiveTime;
 	}
 
 	/**
@@ -108,7 +108,7 @@ public class PoolThreads implements OnFinishTaskListener, OnThreadFromPoolStop {
 	 * @return Max inactive time
 	 */
 	public long getMaxThreadInactiveTime() {
-		return this.mMaxThreadInactiveTime;
+		return mMaxThreadInactiveTime;
 	}
 
 	/**
@@ -132,7 +132,7 @@ public class PoolThreads implements OnFinishTaskListener, OnThreadFromPoolStop {
 		mThreadCounter = 0;
 		mThreadIdGen = 0;
 		mKillThreads = false;
-		this.mMaxThreadInactiveTime = maxThreadInactiveTime;
+		mMaxThreadInactiveTime = maxThreadInactiveTime;
 
 		mFreeThreadPool = new ArrayList<ThreadFromPool>(mMaxThreads);
 		// poolTherad_busy = new Vector(mMaxThreads, 1);
@@ -205,14 +205,13 @@ public class PoolThreads implements OnFinishTaskListener, OnThreadFromPoolStop {
 	 * @param onFinishTaskListener
 	 */
 	public void setOnFinishTaskListener(OnFinishTaskListener onFinishTaskListener) {
-		this.mOnFinishTaskListener = onFinishTaskListener;
+		mOnFinishTaskListener = onFinishTaskListener;
 	}
 
 	public void onFinishTask(TaskResult result, BaseTask task, ThreadFromPool thread) {
 		if (mKillThreads) {
 			thread.stopTask();
 		} else {
-
 			thread.setMaxThreadInactiveTime(mMaxThreadInactiveTime);
 			mFreeThreadPool.add(thread);
 			// LogCat.i(tag, "Adding thread from task id=" + task.getTaskId());
@@ -226,7 +225,6 @@ public class PoolThreads implements OnFinishTaskListener, OnThreadFromPoolStop {
 		removeThread(thread);
 		// LogCat.i(tag, "-- id Thread=" + thread.getTaskId() +
 		// " has been stopped");
-
 	}
 
 	/**
