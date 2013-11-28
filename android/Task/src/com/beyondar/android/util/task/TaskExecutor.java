@@ -405,7 +405,7 @@ public class TaskExecutor {
 					// + " BaseTask id=" + task.getTaskId());
 				}
 				if (task.isKillable()) {
-					task.onKillTask(new TaskResult(task.getIdTask(), false, TaskResult.TASK_MESSAGE_REMOVED,
+					task.onKillTask(new TaskResult(task.getTaskId(), false, TaskResult.TASK_MESSAGE_REMOVED,
 							"BaseTask removed! Reasons: the flag killable has been activated", null));
 					mQueueAsyncTasks.remove(task);
 				} else if (checkTaskBeforeExecute(task) && isTime

@@ -25,7 +25,7 @@ public class TaskWithUiThreadAccessActivity extends Activity {
         buttonStart.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                CustomTask customTask = new CustomTask(1);
+                CustomTask customTask = new CustomTask();
                 TaskExecutor.getInstance().addTask(customTask);
             }
         });
@@ -33,8 +33,8 @@ public class TaskWithUiThreadAccessActivity extends Activity {
 
     private class CustomTask extends BaseTask{
 
-        public CustomTask(long id) {
-            super(123);
+        public CustomTask() {
+            super();
         }
 
         @Override

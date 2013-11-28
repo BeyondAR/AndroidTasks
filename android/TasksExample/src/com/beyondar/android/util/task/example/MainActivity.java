@@ -11,7 +11,7 @@ import android.widget.ListView;
 public class MainActivity extends Activity implements AdapterView.OnItemClickListener{
 
     private ListView mLisViewt;
-    private String[] values = new String[] { "Task with UI thread access" };
+    private String[] values = new String[] { "Task with UI thread access", "Task with dependencies" };
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -42,6 +42,7 @@ public class MainActivity extends Activity implements AdapterView.OnItemClickLis
                 openActivity(TaskWithUiThreadAccessActivity.class);
                 break;
             case 1:
+                openActivity(TaskWithDependenciesActivity.class);
                 break;
             case 2:
                 break;

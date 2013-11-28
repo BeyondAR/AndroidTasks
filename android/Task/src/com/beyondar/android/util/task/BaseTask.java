@@ -30,7 +30,7 @@ public abstract class BaseTask implements Task {
 	private boolean mRunInBackground;
 	private boolean mRunning;
 	private boolean mWaitTaskToFinish;
-	private int mTaskToWait;
+	private long mTaskToWait;
 
 	/**
 	 * Create a new {@link BaseTask} with an specific ID
@@ -158,7 +158,7 @@ public abstract class BaseTask implements Task {
 	 * @return The {@link TaskResult} instance with the message
 	 *         TaskResult.TASK_MESSAGE_WAIT_OTHER_TASK_TO_FINISH
 	 */
-	protected TaskResult waitUntilTaskFinish(int id) {
+	public TaskResult setTaskIdToWait(long id) {
 		mTaskToWait = id;
 		mWaitTaskToFinish = true;
 
@@ -174,7 +174,7 @@ public abstract class BaseTask implements Task {
 	 * 
 	 * @return the id of the task to wait
 	 */
-	public int getTaskIdToWait() {
+	public long getTaskIdToWait() {
 		return mTaskToWait;
 	}
 
@@ -194,7 +194,7 @@ public abstract class BaseTask implements Task {
 	 * 
 	 * @return the task id
 	 */
-	public long getIdTask() {
+	public long getTaskId() {
 		return mId;
 	}
 
