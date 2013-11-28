@@ -33,3 +33,5 @@ proguard/
 .idea/
 .gradle/
 
+#Ignore other testing folders
+src-task/
