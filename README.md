@@ -68,8 +68,7 @@ CustomTask taskA = new CustomTask(taskId++);
 CustomTask taskB = new CustomTask(taskId++);
 				
 taskA.setTaskIdToWait(taskB.getTaskId());
-
-				
+			
 TaskExecutor.getInstance().addTask(taskA);
 TaskExecutor.getInstance().addTask(taskB);
 ```
